@@ -25,7 +25,7 @@ public class BookingService
 
         // Find and mark the corresponding timeslot as booked
         var timeslot = _context.Timeslots
-            .FirstOrDefault(ts => ts.ResourceId == booking.ResourceId
+            .FirstOrDefault(ts => ts.Resource == booking.Resource
                 && ts.StartTime == booking.StartTime
                 && ts.EndTime == booking.EndTime);
 
@@ -116,7 +116,7 @@ public class BookingService
         var now = DateTime.UtcNow;
 
         return _context.Timeslots
-            .Include(ts => ts.ResourceId)
+            .Include(ts => ts.Resource)
             .Where(ts => ts.StartTime > now && ts.IsBooked == false)
             .OrderBy(ts => ts.StartTime)
             .ToList();
