@@ -100,6 +100,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AdminUserService>();
 builder.Services.AddScoped<AdminBookingService>();
 builder.Services.AddScoped<AdminResourceService>();
+builder.Services.AddScoped<OpenAiService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAuthorization();
