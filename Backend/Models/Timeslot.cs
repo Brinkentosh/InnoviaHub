@@ -12,11 +12,12 @@ public class Timeslot
     // public int ResourceId { get; set; }
     // public Resource Resource { get; set; } = null!;
 
-        [Key]
-        public int TimeslotId { get; set; }
-        public int ResourceId { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public bool IsBooked { get; set; }
+    [Key]
+    public int TimeslotId { get; set; }
+    public int ResourceId { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
+    public bool IsBooked { get; set; }
+    public Resource Resource { get; set; } = null!;
 }
 

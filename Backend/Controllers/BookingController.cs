@@ -137,36 +137,42 @@ namespace InnoviaHub.Controllers
         [HttpGet("ResourceAvailability")]
         public ActionResult GetResourceAvailability()
         {
-            TimeZoneInfo swedishTimeZone;
             try
             {
-                swedishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
-            }
-            catch
-            {
-                return StatusCode(500, "Could not find the Swedish time zone on this system.");
-            }
+                Console.WriteLine("🚀 Entering ResourceAvailability");
 
-            var nowInSweden = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, swedishTimeZone);
+                TimeZoneInfo swedishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
+                DateTime nowUtc = DateTime.UtcNow;
 
-            var resources = _context.Resources
-                .Include(r => r.Timeslots)
-                .ToList();
+                Console.WriteLine($"🕒 Now UTC: {nowUtc}");
 
-            var availability = resources
-                .GroupBy(r => r.ResourceType)
-                .ToDictionary(
-                    g => g.Key.ToString(),
-                    g => g.Count(r =>
-                        !_context.Bookings.Any(b =>
-                            b.ResourceId == r.ResourceId &&
-                            b.StartTime <= nowInSweden &&
-                            b.EndTime > nowInSweden
+                var resources = _context.Resources
+                    .Include(r => r.Timeslots)
+                    .ToList();
+
+                Console.WriteLine($"🔍 Loaded {resources.Count} resources");
+
+                var availability = resources
+                    .GroupBy(r => r.ResourceType)
+                    .ToDictionary(
+                        g => g.Key.ToString(),
+                        g => g.Count(r =>
+                            !_context.Bookings.Any(b =>
+                                b.ResourceId == r.ResourceId &&
+                                b.StartTime <= nowUtc &&
+                                b.EndTime > nowUtc
+                            )
                         )
-                    )
-                );
+                    );
 
-            return Ok(availability);
+                return Ok(availability);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Exception: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                return StatusCode(500, "Internal server error: " + ex.Message);
+            }
         }
 
         [HttpPost("InterpretBookingRequest")]
