@@ -17,14 +17,16 @@ namespace InnoviaHub.Controllers
         private readonly InnoviaHubDB _context;
         private readonly BookingService _bookingService;
         private readonly IHubContext<BookingHub> _hubContext;
+        private readonly OpenAiService _openAiService;
 
 
 
-        public BookingController(InnoviaHubDB context, BookingService bookingService, IHubContext<BookingHub> hubContext)
+        public BookingController(InnoviaHubDB context, BookingService bookingService, IHubContext<BookingHub> hubContext, OpenAiService openAiService)
         {
             _context = context;
             _bookingService = bookingService;
             _hubContext = hubContext;
+            _openAiService = openAiService;
 
         }
 
@@ -165,6 +167,18 @@ namespace InnoviaHub.Controllers
                 );
 
             return Ok(availability);
+        }
+
+        [HttpPost("InterpretBookingRequest")]
+        public async Task<IActionResult> InterpretBookingRequest([FromBody] InterpretBookingDTO input)
+        {
+            var availableTimes = _bookingService.GetAvailableTimeslots();
+
+            var prompt = _openAiService.BuildPrompt(input.UserInput, availableTimes);
+
+            var response = await _openAiService.GetChatResponse(prompt);
+
+            return Ok(response);
         }
 
     }
