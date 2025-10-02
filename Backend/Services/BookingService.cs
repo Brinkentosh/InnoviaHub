@@ -40,21 +40,21 @@ public class BookingService
 
     public List<BookingDTO> GetBookingsByUser(string userId)
     {
-          return _context.Bookings
-        .Include(b => b.Resource)
-        .Where(b => b.UserId == userId)
-        .Select(b => new BookingDTO
-        {
-            BookingId = b.BookingId,
-            UserId = b.UserId,
-            ResourceId = b.ResourceId,
-            ResourceName = b.Resource != null ? b.Resource.ResourceName : "Unknown",
-            BookingType = b.BookingType,
-            StartTime = b.StartTime,
-            EndTime = b.EndTime,
-            DateOfBooking = b.DateOfBooking
-        })
-        .ToList();
+        return _context.Bookings
+      .Include(b => b.Resource)
+      .Where(b => b.UserId == userId)
+      .Select(b => new BookingDTO
+      {
+          BookingId = b.BookingId,
+          UserId = b.UserId,
+          ResourceId = b.ResourceId,
+          ResourceName = b.Resource != null ? b.Resource.ResourceName : "Unknown",
+          BookingType = b.BookingType,
+          StartTime = b.StartTime,
+          EndTime = b.EndTime,
+          DateOfBooking = b.DateOfBooking
+      })
+      .ToList();
     }
 
     public bool IsBookingAvailable(int resourceId, DateTime startTime, DateTime endTime)
@@ -109,6 +109,17 @@ public class BookingService
             return true;
         }
         return false;
+    }
+
+    public List<Timeslot> GetAvailableTimeslots()
+    {
+        var now = DateTime.UtcNow;
+
+        return _context.Timeslots
+            .Include(ts => ts.ResourceId)
+            .Where(ts => ts.StartTime > now && ts.IsBooked == false)
+            .OrderBy(ts => ts.StartTime)
+            .ToList();
     }
 
 }
