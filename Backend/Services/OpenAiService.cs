@@ -35,6 +35,16 @@ namespace Backend.Services
                 new AuthenticationHeaderValue("Bearer", _config["OpenAI:Apikey"]);
 
             var response = await _httpClient.PostAsync("https://api.openai.com/v1/chat/completions", requestContent);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("❌ OpenAI API error response:");
+                Console.WriteLine(responseBody); // 👈 korrekt utskrift
+
+                throw new Exception("OpenAI API call failed: " + responseBody);
+            }
+
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
@@ -45,23 +55,31 @@ namespace Backend.Services
 
         public string BuildPrompt(string userInput, List<Timeslot> availableTimes)
         {
-            var times = string.Join("\n", availableTimes.Select(t =>
+            var limitedTimes = availableTimes.Take(20);
+            var times = string.Join("\n", limitedTimes.Select(t =>
                 $"- {t.StartTime:yyyy-MM-dd HH:mm} till {t.EndTime:HH:mm}"));
 
             return $@"
-            Du är en AI-assistent som hjälper användare att boka mötesrum.
+            Du är en AI-assistent som hjälper användare att boka skrivbord, mötesrum, VR-headset och AI-server.
 
-            Tillgängliga tider:
+            Här är en lista på Tillgängliga tider för resurserna:
             {times}
 
             Användarens meddelande:
             ""{userInput}""
 
-            Tolka:
-            - Datum och tider
-            - Bekräfta förslag (t.ex. ""Vill du boka 09:00 till 14:00 den 3 oktober?"")
-            - Returnera även json:
-            {{""startTime"": ..., ""endTime"": ..., ""date"": ..., ""resourceType"": ""mötesrum""}}
+            Instruktioner:
+            - Analysera användarens meddelande
+            - Identifiera om det matchar någon av de tillgängliga tiderna ovan
+            - Om det matchar: föreslå en bokning i naturligt språk
+            - Om det inte matchar: föreslå andra tillgängliga alternativ
+            - Returnera även en JSON med följande format:
+            {{
+            ""startTime"": ""YYYY-MM-DDTHH:MM"",
+            ""endTime"": ""YYYY-MM-DDTHH:MM"",
+            ""date"": ""YYYY-MM-DD"",
+            ""resourceType"": ""mötesrum""
+            }}
             ";
         }
     }
