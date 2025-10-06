@@ -100,3 +100,45 @@
 .ai-assistant-send-button:hover {
   background-color: #005a9e;
 }
+
+.ai-assistant-confirmation {
+  background-color: #f1f1f1;
+  border-left: 4px solid #007bff;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.ai-assistant-confirmation p {
+  margin: 0 0 8px 0;
+}
+
+.ai-assistant-confirmation button {
+  margin-right: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.ai-assistant-confirmation button:first-of-type {
+  background-color: #007bff;
+  color: white;
+}
+
+.ai-assistant-confirmation button:first-of-type:hover {
+  background-color: #0056b3;
+}
+
+.ai-assistant-confirmation button:last-of-type {
+  background-color: #dc3545;
+  color: white;
+}
+
+.ai-assistant-confirmation button:last-of-type:hover {
+  background-color: #c82333;
+}

@@ -179,12 +179,41 @@ namespace InnoviaHub.Controllers
         public async Task<IActionResult> InterpretBookingRequest([FromBody] InterpretBookingDTO input)
         {
             var availableTimes = _bookingService.GetAvailableTimeslots();
-
             var prompt = _openAiService.BuildPrompt(input.UserInput, availableTimes);
-
             var response = await _openAiService.GetChatResponse(prompt);
 
-            return Ok(response);
+            // Försök hitta JSON i AI-svaret
+            int jsonStart = response.IndexOf('{');
+            int jsonEnd = response.LastIndexOf('}');
+
+            if (jsonStart >= 0 && jsonEnd > jsonStart)
+            {
+                try
+                {
+                    var jsonString = response.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                    var suggestion = System.Text.Json.JsonSerializer.Deserialize<object>(jsonString);
+
+                    var messageOnly = response.Substring(0, jsonStart).Trim();
+
+                    return Ok(new
+                    {
+                        message = messageOnly,
+                        suggestion = suggestion
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("❌ Misslyckades att parsa JSON från AI-svar:");
+                    Console.WriteLine(ex.Message);
+                }
+            }
+
+            // Om JSON inte hittades/parsing misslyckades
+            return Ok(new
+            {
+                message = response,
+                suggestion = (object?)null
+            });
         }
 
     }
