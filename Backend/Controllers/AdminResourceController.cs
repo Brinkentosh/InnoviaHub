@@ -20,8 +20,16 @@ namespace Backend.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var resources = await _service.GetAllAsync();
-            return Ok(resources);
+            try
+            {
+                var resources = await _service.GetAllAsync();
+                return Ok(resources);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("❌ FEL I GetAll: " + ex.Message);
+                return StatusCode(500, "Serverfel i GetAll: " + ex.Message);
+            }
         }
 
         [HttpGet("type/{type}")]

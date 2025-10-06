@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using InnoviaHub.Models;
 
 public class Timeslot
@@ -18,6 +19,7 @@ public class Timeslot
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public bool IsBooked { get; set; }
+    [JsonIgnore]
     public Resource Resource { get; set; } = null!;
 }
 

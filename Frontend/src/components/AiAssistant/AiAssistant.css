@@ -1,0 +1,102 @@
+.ai-assistant-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+}
+
+.ai-assistant-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #0078d4;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  font-size: 30px;
+  user-select: none;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.ai-assistant-chatbox {
+  margin-top: 10px;
+  width: 320px;
+  max-height: 400px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.ai-assistant-chatlog {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.ai-assistant-placeholder {
+  color: #666;
+  padding: 10px;
+}
+
+.ai-assistant-message {
+  margin-bottom: 8px;
+  display: flex;
+}
+
+.ai-assistant-message.user {
+  justify-content: flex-end;
+}
+
+.ai-assistant-message.ai {
+  justify-content: flex-start;
+}
+
+.ai-assistant-message span {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 15px;
+  white-space: pre-wrap;
+  max-width: 80%;
+}
+
+.ai-assistant-message.user span {
+  background-color: #0078d4;
+  color: white;
+}
+
+.ai-assistant-message.ai span {
+  background-color: #eee;
+  color: black;
+}
+
+.ai-assistant-input {
+  resize: none;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 8px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ai-assistant-send-button {
+  margin-top: 6px;
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.ai-assistant-send-button:hover {
+  background-color: #005a9e;
+}

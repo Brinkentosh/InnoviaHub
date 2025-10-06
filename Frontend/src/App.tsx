@@ -9,12 +9,14 @@ import LayoutPage from "./pages/officeLayout/layoutPage";
 import LoginPage from "./pages/signInPage/signIn";
 import BookingsAdmin from "./components/Admin/BookingsAdmin/bookingsAdmin";
 import ResourceAdmin from "./components/Admin/ResourceAdmin/resourceAdmin";
+import AiAssistant from "./components/AiAssistant/AiAssistant";
 
 
 
 function App() {
   return (
     <div className="App">
+      <AiAssistant />
       <Routes>
         <Route path="/" element={<StartPage />} />
         <Route path="/admin" element={<AdminPage />} >
