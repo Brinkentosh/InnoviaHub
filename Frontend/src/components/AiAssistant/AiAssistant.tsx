@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './AiAssistant.css';
 import { BASE_URL } from "../../config";
 
@@ -7,10 +7,11 @@ const AiAssistant: React.FC = () => {
   const [input, setInput] = useState('');
   const [chatLog, setChatLog] = useState<{ sender: 'user' | 'ai'; message: string }[]>([]);
   const [pendingBooking, setPendingBooking] = useState<any | null>(null);
+  const chatLogRef = useRef<HTMLDivElement>(null);
 
   const toggleOpen = () => setIsOpen(!isOpen);
 
-  function extractJsonFromText(text: string): any | null {
+  const extractJsonFromText = (text: string): any | null => {
     const jsonMatch = text.match(/{[\s\S]*}/);
     if (!jsonMatch) return null;
     try {
@@ -19,12 +20,12 @@ const AiAssistant: React.FC = () => {
       console.error("❌ JSON parse error:", error);
       return null;
     }
-  }
+  };
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    setChatLog([...chatLog, { sender: 'user', message: input }]);
+    setChatLog(prev => [...prev, { sender: 'user', message: input }]);
 
     try {
       const response = await fetch(`${BASE_URL}booking/InterpretBookingRequest`, {
@@ -33,22 +34,22 @@ const AiAssistant: React.FC = () => {
         body: JSON.stringify({ userInput: input })
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-      const text = await response.text();
-      setChatLog(prev => [...prev, { sender: 'ai', message: text }]);
+        const data = await response.json();
 
-      const json = extractJsonFromText(text);
-      if (json) {
-        setPendingBooking(json);
-      }
+        if (data.message) {
+            setChatLog(prev => [...prev, { sender: 'ai', message: data.message }]);
+        }
+
+        if (data.suggestion) {
+            setPendingBooking(data.suggestion);
+        }
 
       setInput('');
     } catch (error) {
-      setChatLog(prev => [...prev, { sender: 'ai', message: 'Något gick fel. Försök igen senare.' }]);
       console.error('Fetch error:', error);
+      setChatLog(prev => [...prev, { sender: 'ai', message: '❌ Något gick fel. Försök igen senare.' }]);
     }
   };
 
@@ -63,9 +64,18 @@ const AiAssistant: React.FC = () => {
     if (!pendingBooking) return;
 
     const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-    const resourceId = getResourceIdFromType(pendingBooking.resourceType); // Du måste mappa detta
+    const user = JSON.parse(localStorage.getItem("user") || '{}');
+    const userId = user.id;
+    const resourceId = getResourceIdFromType(pendingBooking.resourceType);
     const bookingType = getBookingTypeFromResource(pendingBooking.resourceType);
+
+    if (!userId || !resourceId || resourceId === 0) {
+      setChatLog(prev => [...prev, {
+        sender: 'ai',
+        message: "❌ Bokningen kunde inte bekräftas – ogiltig data eller användare saknas."
+      }]);
+      return;
+    }
 
     const dto = {
       userId,
@@ -85,9 +95,7 @@ const AiAssistant: React.FC = () => {
         body: JSON.stringify(dto)
       });
 
-      if (!res.ok) {
-        throw new Error("Kunde inte skapa bokningen.");
-      }
+      if (!res.ok) throw new Error("Kunde inte skapa bokningen.");
 
       setChatLog(prev => [...prev, { sender: 'ai', message: "✅ Bokningen är nu bekräftad!" }]);
       setPendingBooking(null);
@@ -98,7 +106,7 @@ const AiAssistant: React.FC = () => {
   };
 
   const getResourceIdFromType = (type: string): number => {
-    switch (type.toLowerCase()) {
+    switch (type?.toLowerCase()) {
       case 'mötesrum': return 1;
       case 'skrivbord': return 2;
       case 'vr-headset': return 3;
@@ -108,7 +116,7 @@ const AiAssistant: React.FC = () => {
   };
 
   const getBookingTypeFromResource = (type: string): number => {
-    switch (type.toLowerCase()) {
+    switch (type?.toLowerCase()) {
       case 'mötesrum': return 0;
       case 'skrivbord': return 1;
       case 'vr-headset': return 2;
@@ -116,6 +124,18 @@ const AiAssistant: React.FC = () => {
       default: return 0;
     }
   };
+
+  const formatTime = (timeStr: string) =>
+    new Date(timeStr).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+
+  const formatDate = (timeStr: string) =>
+    new Date(timeStr).toLocaleDateString('sv-SE');
+
+  useEffect(() => {
+    if (chatLogRef.current) {
+      chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+    }
+  }, [chatLog]);
 
   return (
     <div className="ai-assistant-container">
@@ -129,11 +149,11 @@ const AiAssistant: React.FC = () => {
 
       {isOpen && (
         <div className="ai-assistant-chatbox">
-          <div className="ai-assistant-chatlog">
+          <div className="ai-assistant-chatlog" ref={chatLogRef}>
             {chatLog.length === 0 && (
               <p className="ai-assistant-placeholder">
                 Hej! <br />
-                Jag är din AI-Assistent som gärna hjälper dig att boka resurser. Skriv bara vad och när!
+                Jag är din AI-Assistent. Jag hjälper dig boka skrivbord, mötesrum och mer. Skriv bara vad du behöver!
               </p>
             )}
 
@@ -143,11 +163,15 @@ const AiAssistant: React.FC = () => {
               </div>
             ))}
 
-            {pendingBooking && (
+            {pendingBooking?.startTime && pendingBooking?.endTime && (
               <div className="ai-assistant-confirmation">
-                <p>💡 Vill du boka <strong>{pendingBooking.resourceType}</strong> den <strong>{pendingBooking.date}</strong> mellan <strong>{pendingBooking.startTime.slice(11, 16)}</strong> och <strong>{pendingBooking.endTime.slice(11, 16)}</strong>?</p>
-                <button onClick={handleConfirmBooking}>✅ Bekräfta</button>
-                <button onClick={() => setPendingBooking(null)}>❌ Avbryt</button>
+                <p>
+                  💡 Vill du boka <strong>{pendingBooking.resourceType}</strong> den <strong>{formatDate(pendingBooking.startTime)}</strong> mellan <strong>{formatTime(pendingBooking.startTime)}</strong> och <strong>{formatTime(pendingBooking.endTime)}</strong>?
+                </p>
+                <div className="ai-assistant-buttons">
+                  <button onClick={handleConfirmBooking}>✅ Bekräfta</button>
+                  <button onClick={() => setPendingBooking(null)}>❌ Avbryt</button>
+                </div>
               </div>
             )}
           </div>
