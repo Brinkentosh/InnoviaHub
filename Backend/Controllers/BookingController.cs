@@ -67,28 +67,27 @@ namespace InnoviaHub.Controllers
 
             TimeZoneInfo swedishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
 
-            // Skicka UTC-tider till bokningskontroll
-            var startUtc = dto.StartTime.ToUniversalTime();
-            var endUtc = dto.EndTime.ToUniversalTime();
+            var startTimeInSweden = TimeZoneInfo.ConvertTime(dto.StartTime, swedishTimeZone);
+            var endTimeInSweden = TimeZoneInfo.ConvertTime(dto.EndTime, swedishTimeZone);
 
-            if (!_bookingService.IsBookingAvailable(dto.ResourceId, startUtc, endUtc))
+            // Control overlapping
+            if (!_bookingService.IsBookingAvailable(dto.ResourceId, startTimeInSweden, endTimeInSweden))
                 return Conflict("Booking overlaps with an existing one.");
 
             var nowInSweden = TimeZoneInfo.ConvertTime(DateTime.Now, swedishTimeZone);
-            if (dto.StartTime < nowInSweden)
-                return BadRequest("Start time must be in the framtiden.");
+            if (startTimeInSweden < nowInSweden)
+                return BadRequest("Start time must be in the future.");
 
-            // Skapa bokningen med UTC-tider
+            // Create booking
             var booking = new Booking
             {
                 UserId = dto.UserId,
                 ResourceId = dto.ResourceId,
                 BookingType = dto.BookingType,
-                StartTime = startUtc,
-                EndTime = endUtc,
+                StartTime = dto.StartTime.ToUniversalTime(),
+                EndTime = dto.EndTime.ToUniversalTime(),
                 DateOfBooking = DateTime.Now
             };
-
 
 
             _bookingService.CreateBooking(booking);
