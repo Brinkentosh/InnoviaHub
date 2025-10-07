@@ -59,10 +59,19 @@ public class BookingService
 
     public bool IsBookingAvailable(int resourceId, DateTime startTime, DateTime endTime)
     {
+        // Konvertera till UTC för jämförelse mot sparade tider
+        var startUtc = startTime.ToUniversalTime();
+        var endUtc = endTime.ToUniversalTime();
+
         var bookingForResource = _context.Bookings.Where(b => b.ResourceId == resourceId);
-        var bookingsOverlap = bookingForResource.Any(b => startTime < b.EndTime && endTime > b.StartTime);
+
+        var bookingsOverlap = bookingForResource.Any(b =>
+            startUtc < b.EndTime && endUtc > b.StartTime
+        );
+
         return !bookingsOverlap;
     }
+
 
     public List<Booking> GetAllBookings()
     {
