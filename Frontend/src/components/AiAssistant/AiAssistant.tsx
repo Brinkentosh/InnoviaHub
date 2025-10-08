@@ -105,11 +105,11 @@ const AiAssistant: React.FC = () => {
       const bookingType = matchedResource.resourceType;
 
       const dto = {
-        userId,
-        resourceId,
-        bookingType,
-        startTime: new Date(pendingBooking.startTime).toISOString(),
-        endTime: new Date(pendingBooking.endTime).toISOString(),
+        UserId: userId,
+        ResourceId: resourceId,
+        BookingType: bookingType,
+        StartTime: new Date(pendingBooking.startTime).toISOString(),
+        EndTime: new Date(pendingBooking.endTime).toISOString(),
       };
 
       console.log("skicka bokning till backend ", JSON.stringify(dto));

@@ -55,9 +55,12 @@ namespace Backend.Services
 
         public string BuildPrompt(string userInput, List<Timeslot> availableTimes)
         {
-            var limitedTimes = availableTimes.Take(20);
-            var times = string.Join("\n", limitedTimes.Select(t =>
+            var filteredTimes = availableTimes
+                .Where(t => t.StartTime.Date >= DateTime.UtcNow.Date.AddDays(1))
+                .Take(20);
+            var times = string.Join("\n", filteredTimes.Select(t =>
                 $"- {t.StartTime:yyyy-MM-dd HH:mm} till {t.EndTime:HH:mm}"));
+
 
             return $@"
             Du är en AI-assistent som hjälper användare att boka skrivbord, mötesrum, VR-headset och AI-server.

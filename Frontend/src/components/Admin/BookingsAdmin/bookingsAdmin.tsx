@@ -40,27 +40,40 @@ const BookingsAdmin = () => {
 
         const data = await res.json();
 
-        // Sort after date and time
-        const mapped: Booking[] = data
-          .map((b: any) => ({
-            bookingId: b.bookingId,
-            resourceName: b.resourceName,
-            memberName: b.memberName,
-            startTime: new Date(b.startTime),
-            endTime: new Date(b.endTime),
-          } as BookingWithDates))
-          .sort(
-            (a: BookingWithDates, b: BookingWithDates) =>
-              a.startTime.getTime() - b.startTime.getTime()
-          )
-          .map((b: BookingWithDates) => ({
-            bookingId: b.bookingId,
-            resourceName: b.resourceName,
-            memberName: b.memberName,
-            date: b.startTime.toLocaleDateString(),
-            time: `${b.startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} - ${b.endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-          }));
+        const locale = "sv-SE";
+        const timeZone = "Europe/Stockholm";
 
+        const mapped = data
+          .map((b: any) => {
+            const startTime = new Date(b.startTime);
+            const endTime = new Date(b.endTime);
+
+            return {
+              bookingId: b.bookingId,
+              resourceName: b.resourceName,
+              memberName: b.memberName,
+              startTime,  // Behåll Date-objekt för sortering
+              endTime,
+            };
+          })
+          // Sortera på startTime (Date-objekt)
+          .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+          // Formatera för visning
+          .map((b) => ({
+            bookingId: b.bookingId,
+            resourceName: b.resourceName,
+            memberName: b.memberName,
+            date: b.startTime.toLocaleDateString(locale, { timeZone }),
+            time: `${b.startTime.toLocaleTimeString(locale, {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone,
+            })} - ${b.endTime.toLocaleTimeString(locale, {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone,
+            })}`,
+          }));
 
         setBookings(mapped);
       } catch (err: any) {
@@ -73,6 +86,7 @@ const BookingsAdmin = () => {
 
     fetchBookings();
   }, []);
+
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 

@@ -76,6 +76,8 @@ namespace InnoviaHub.Controllers
 
             if (dto.StartTime < nowUtc.Subtract(margin))
             {
+                Console.WriteLine("DEBUG: Returnerar BadRequest: Start time måste vara i framtiden");
+
                 return BadRequest("Start time must be in the future.");
             }
 
@@ -85,8 +87,11 @@ namespace InnoviaHub.Controllers
 
             // Kontrollera överlappning med bokningar
             if (!_bookingService.IsBookingAvailable(dto.ResourceId, startTimeInSweden, endTimeInSweden))
-                return Conflict("Booking overlaps with an existing one.");
+            {
+                Console.WriteLine("DEBUG: Returnerar Conflict: Överlappande bokning");
 
+                return Conflict("Booking overlaps with an existing one.");
+            }
             // Skapa bokningen
             var booking = new Booking
             {
