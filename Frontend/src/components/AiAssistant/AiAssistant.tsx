@@ -11,17 +11,6 @@ const AiAssistant: React.FC = () => {
 
   const toggleOpen = () => setIsOpen(!isOpen);
 
-  const extractJsonFromText = (text: string): any | null => {
-    const jsonMatch = text.match(/{[\s\S]*}/);
-    if (!jsonMatch) return null;
-    try {
-      return JSON.parse(jsonMatch[0]);
-    } catch (error) {
-      console.error("❌ JSON parse error:", error);
-      return null;
-    }
-  };
-
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -82,7 +71,6 @@ const AiAssistant: React.FC = () => {
       if (!res.ok) throw new Error("Kunde inte hämta resurser");
       const allResources = await res.json();
 
-      // Mappning från text till nummer enligt backend
       const resourceTypeMap: { [key: string]: number } = {
         'mötesrum': 0,
         'skrivbord': 1,
@@ -108,7 +96,7 @@ const AiAssistant: React.FC = () => {
       if (!matchedResource) {
         setChatLog(prev => [...prev, {
           sender: 'ai',
-          message: `❌ Ingen tillgänglig resurs av typen "${pendingBooking.resourceType}" under vald tid.`
+          message: `❌ Ingen tillgänglig resurs av typen "${pendingBooking.resourceType}" under "${pendingBooking.startTime}" och "${pendingBooking.endTime}" .`
         }]);
         return;
       }

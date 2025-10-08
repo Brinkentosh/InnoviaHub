@@ -40,7 +40,7 @@ namespace Backend.Services
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine("❌ OpenAI API error response:");
-                Console.WriteLine(responseBody); // 👈 korrekt utskrift
+                Console.WriteLine(responseBody);
 
                 throw new Exception("OpenAI API call failed: " + responseBody);
             }
@@ -73,7 +73,9 @@ namespace Backend.Services
             - Identifiera om det matchar någon av de tillgängliga tiderna ovan
             - Om det matchar: föreslå en bokning i naturligt språk
             - Om det inte matchar: föreslå andra tillgängliga alternativ
-            - Returnera även en JSON med följande format:
+            - Returnera även en JSON med följande format men skriv inte ut det i medelandet!:
+
+
             {{
             ""startTime"": ""YYYY-MM-DDTHH:MM"",
             ""endTime"": ""YYYY-MM-DDTHH:MM"",
