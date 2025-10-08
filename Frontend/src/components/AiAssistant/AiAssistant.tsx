@@ -108,9 +108,11 @@ const AiAssistant: React.FC = () => {
         userId,
         resourceId,
         bookingType,
-        startTime: pendingBooking.startTime,
-        endTime: pendingBooking.endTime
+        startTime: new Date(pendingBooking.startTime).toISOString(),
+        endTime: new Date(pendingBooking.endTime).toISOString(),
       };
+
+      console.log("skicka bokning till backend ", JSON.stringify(dto));
 
       const bookingRes = await fetch(`${BASE_URL}booking`, {
         method: 'POST',

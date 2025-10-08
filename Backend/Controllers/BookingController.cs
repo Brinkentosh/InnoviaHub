@@ -6,6 +6,7 @@ using InnoviaHub.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using InnoviaHub.DTOs;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 
 namespace InnoviaHub.Controllers
@@ -49,7 +50,11 @@ namespace InnoviaHub.Controllers
         [HttpPost]
         public async Task<ActionResult<Booking>> CreateBooking([FromBody] CreateBookingDTO dto)
         {
+            Console.WriteLine("Inkommande bokningsförsök från frontend: ");
+            Console.WriteLine(JsonSerializer.Serialize(dto));
+
             Console.WriteLine($"POST Booking: ResourceId={dto.ResourceId}, UserId={dto.UserId}, Start={dto.StartTime}, End={dto.EndTime}");
+            Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
 
             if (!ModelState.IsValid)
             {
@@ -65,20 +70,24 @@ namespace InnoviaHub.Controllers
                 return BadRequest(ModelState);
             }
 
-            TimeZoneInfo swedishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+            // Kontrollera att starttiden är i framtiden med margin (exempel: 1 minut)
+            var nowUtc = DateTime.UtcNow;
+            var margin = TimeSpan.FromMinutes(1);
 
+            if (dto.StartTime < nowUtc.Subtract(margin))
+            {
+                return BadRequest("Start time must be in the future.");
+            }
+
+            TimeZoneInfo swedishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
             var startTimeInSweden = TimeZoneInfo.ConvertTime(dto.StartTime, swedishTimeZone);
             var endTimeInSweden = TimeZoneInfo.ConvertTime(dto.EndTime, swedishTimeZone);
 
-            // Control overlapping
+            // Kontrollera överlappning med bokningar
             if (!_bookingService.IsBookingAvailable(dto.ResourceId, startTimeInSweden, endTimeInSweden))
                 return Conflict("Booking overlaps with an existing one.");
 
-            var nowInSweden = TimeZoneInfo.ConvertTime(DateTime.Now, swedishTimeZone);
-            if (startTimeInSweden < nowInSweden)
-                return BadRequest("Start time must be in the future.");
-
-            // Create booking
+            // Skapa bokningen
             var booking = new Booking
             {
                 UserId = dto.UserId,
@@ -89,8 +98,8 @@ namespace InnoviaHub.Controllers
                 DateOfBooking = DateTime.Now
             };
 
-
             _bookingService.CreateBooking(booking);
+
             Console.WriteLine("📡 Sending SignalR update...");
             await _hubContext.Clients.All.SendAsync("ReceiveBookingUpdate", new BookingUpdate
             {
@@ -100,6 +109,7 @@ namespace InnoviaHub.Controllers
 
             return Ok(booking);
         }
+
 
 
         // DELETE
