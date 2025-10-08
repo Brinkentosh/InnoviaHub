@@ -56,7 +56,7 @@ namespace Backend.Services
         public string BuildPrompt(string userInput, List<Timeslot> availableTimes)
         {
             var filteredTimes = availableTimes
-                .Where(t => t.StartTime.Date >= DateTime.UtcNow.Date.AddDays(1))
+                .Where(t => t.StartTime.Date >= DateTime.UtcNow.Date)
                 .Take(20);
             var times = string.Join("\n", filteredTimes.Select(t =>
                 $"- {t.StartTime:yyyy-MM-dd HH:mm} till {t.EndTime:HH:mm}"));

@@ -57,9 +57,9 @@ const BookingsAdmin = () => {
             };
           })
           // Sortera på startTime (Date-objekt)
-          .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+          .sort((a: BookingWithDates, b: BookingWithDates) => a.startTime.getTime() - b.startTime.getTime())
           // Formatera för visning
-          .map((b) => ({
+          .map((b: BookingWithDates) => ({
             bookingId: b.bookingId,
             resourceName: b.resourceName,
             memberName: b.memberName,
