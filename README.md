@@ -9,6 +9,7 @@ Built with a React frontend and a .NET 9.0 backend, it offers secure authenticat
 - **Admin Controls**: Manage users and resources via dedicated admin endpoints.
 - **Resource Booking**: Users can book and manage available office resources via the dashboard.
 - **Responsive UI**: Built with React and styled with CSS modules.
+- **AI-Implementation**: Booking available thorugh freetext
 
 ## Tech Stack
 
@@ -18,6 +19,7 @@ Built with a React frontend and a .NET 9.0 backend, it offers secure authenticat
 - SignalR
 - Sensor API
 - JWT Token
+- OpenAi API
 
 ### Frontend
 
@@ -47,7 +49,7 @@ Built with a React frontend and a .NET 9.0 backend, it offers secure authenticat
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/Dilemma98/InnoviaHub.git
+git clone https://github.com/Brinkentosh/InnoviaHub.git
 cd InnoviaHub/Backend 
 ```
 
@@ -57,13 +59,20 @@ cd InnoviaHub/Backend
 dotnet restore
 ```
 
-3. **Build the project:**
+3. **Create .env file in the root of Backend folder with this context**
+```bash
+AZURE_SQL_CONNECTIONSTRING='XXXX'
+JWT_SECRET='XXXX
+OpenAI__ApiKey=XXXX
+```
+
+4. **Build the project:**
 
 ```bash
 dotnet build
 ```
 
-4. **Run the application:**
+5. **Run the application:**
 
 ```bash
 dotnet run

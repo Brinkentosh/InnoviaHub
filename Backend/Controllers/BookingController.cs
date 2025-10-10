@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 using InnoviaHub.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Runtime.Versioning;
 
 
 namespace InnoviaHub.Controllers
@@ -73,6 +74,7 @@ namespace InnoviaHub.Controllers
             // Kontrollera att starttiden är i framtiden med margin (exempel: 1 minut)
             var nowUtc = DateTime.UtcNow;
             var margin = TimeSpan.FromMinutes(1);
+            Console.WriteLine("Starttid bör vara typ: " + dto.StartTime);
 
             if (dto.StartTime < nowUtc.Subtract(margin))
             {
@@ -98,8 +100,8 @@ namespace InnoviaHub.Controllers
                 UserId = dto.UserId,
                 ResourceId = dto.ResourceId,
                 BookingType = dto.BookingType,
-                StartTime = dto.StartTime.ToUniversalTime(),
-                EndTime = dto.EndTime.ToUniversalTime(),
+                StartTime = dto.StartTime,
+                EndTime = dto.EndTime,
                 DateOfBooking = DateTime.Now
             };
 
@@ -188,6 +190,18 @@ namespace InnoviaHub.Controllers
                 Console.WriteLine(ex.StackTrace);
                 return StatusCode(500, "Internal server error: " + ex.Message);
             }
+        }
+
+        [HttpGet("AvailableResources")]
+        public ActionResult<List<Resource>> GetAvailableResource([FromQuery] int resourceType, [FromQuery] DateTime startTime, [FromQuery] DateTime endTime)
+        {
+            BookingType parsedType = (BookingType)resourceType;
+
+            var resources = _context.Resources.Where(r => r.ResourceType == parsedType).ToList();
+
+            var availableResources = resources.Where(r => _bookingService.IsBookingAvailable(r.ResourceId, startTime, endTime)).ToList();
+
+            return Ok(availableResources);
         }
 
         [HttpPost("InterpretBookingRequest")]

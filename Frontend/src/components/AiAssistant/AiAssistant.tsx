@@ -50,94 +50,97 @@ const AiAssistant: React.FC = () => {
   };
 
   const handleConfirmBooking = async () => {
-    if (!pendingBooking) return;
+  console.log(pendingBooking);
+  if (!pendingBooking) return;
 
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-    const parsedUser = user ? JSON.parse(user) : null;
-    const userId = parsedUser?.id;
+  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
+  const parsedUser = user ? JSON.parse(user) : null;
+  const userId = parsedUser?.id;
 
-    if (!userId) {
+  if (!userId) {
+    setChatLog(prev => [...prev, {
+      sender: 'ai',
+      message: "❌ Bokningen kunde inte bekräftas – användare saknas."
+    }]);
+    return;
+  }
+
+  try {
+    // 1. Mappa resurstyp till rätt enum
+    const resourceTypeMap: { [key: string]: number } = {
+      'mötesrum': 0,
+      'skrivbord': 1,
+      'vr-headset': 2,
+      'ai-server': 3
+    };
+
+    const resourceTypeNumber = resourceTypeMap[pendingBooking.resourceType?.toLowerCase()];
+
+    // 2. Kontrollera att resurstypen är giltig
+    if (resourceTypeNumber === undefined) {
       setChatLog(prev => [...prev, {
         sender: 'ai',
-        message: "❌ Bokningen kunde inte bekräftas – användare saknas."
+        message: `❌ Okänd resurstyp: "${pendingBooking.resourceType}"`
       }]);
       return;
     }
 
-    try {
-      // Hämta resurser från backend
-      const res = await fetch(`${BASE_URL}resource`);
-      if (!res.ok) throw new Error("Kunde inte hämta resurser");
-      const allResources = await res.json();
+    // 3. Hämta lediga resurser av denna typ för rätt tid
+    const res = await fetch(`${BASE_URL}booking/AvailableResources?resourceType=${resourceTypeNumber}&startTime=${pendingBooking.startTime}&endTime=${pendingBooking.endTime}`);
+    if (!res.ok) throw new Error("Kunde inte hämta resurser");
+    const allResources = await res.json();
 
-      const resourceTypeMap: { [key: string]: number } = {
-        'mötesrum': 0,
-        'skrivbord': 1,
-        'vr-headset': 2,
-        'ai-server': 3
-      };
+    // 4. Välj första lediga resurs (kan förbättras med sortering etc.)
+    const matchedResource = allResources.find((r: any) =>
+      r.resourceType === resourceTypeNumber
+    );
 
-      const resourceTypeNumber = resourceTypeMap[pendingBooking.resourceType.toLowerCase()];
-
-      if (resourceTypeNumber === undefined) {
-        setChatLog(prev => [...prev, {
-          sender: 'ai',
-          message: `❌ Okänd resurstyp: "${pendingBooking.resourceType}"`
-        }]);
-        return;
-      }
-
-      // Hitta en tillgänglig resurs av rätt typ
-      const matchedResource = allResources.find((r: any) =>
-        r.resourceType === resourceTypeNumber
-      );
-
-      if (!matchedResource) {
-        setChatLog(prev => [...prev, {
-          sender: 'ai',
-          message: `❌ Ingen tillgänglig resurs av typen "${pendingBooking.resourceType}" under "${pendingBooking.startTime}" och "${pendingBooking.endTime}" .`
-        }]);
-        return;
-      }
-
-      const resourceId = matchedResource.resourceId;
-      const bookingType = matchedResource.resourceType;
-
-      const dto = {
-        UserId: userId,
-        ResourceId: resourceId,
-        BookingType: bookingType,
-        StartTime: new Date(pendingBooking.startTime).toISOString(),
-        EndTime: new Date(pendingBooking.endTime).toISOString(),
-      };
-
-      console.log("skicka bokning till backend ", JSON.stringify(dto));
-
-      const bookingRes = await fetch(`${BASE_URL}booking`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(dto)
-      });
-
-      if (!bookingRes.ok) throw new Error("Kunde inte skapa bokningen.");
-
+    if (!matchedResource) {
       setChatLog(prev => [...prev, {
         sender: 'ai',
-        message: "✅ Bokningen är nu bekräftad!"
+        message: `❌ Ingen tillgänglig resurs av typen "${pendingBooking.resourceType}" under "${pendingBooking.startTime}" och "${pendingBooking.endTime}".`
       }]);
-      setPendingBooking(null);
-    } catch (err) {
-      console.error(err);
-      setChatLog(prev => [...prev, {
-        sender: 'ai',
-        message: "❌ Bokningen misslyckades – något gick fel."
-      }]);
+      return;
     }
-  };
+
+    // 5. Bygg DTO för bokning
+    const dto = {
+      UserId: userId,
+      ResourceId: matchedResource.resourceId,
+      BookingType: matchedResource.resourceType,
+      StartTime: pendingBooking.startTime,
+      EndTime: pendingBooking.endTime,
+    };
+
+    console.log("Skicka bokning till backend", JSON.stringify(dto));
+
+    // 6. Skicka bokning till backend
+    const bookingRes = await fetch(`${BASE_URL}booking`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(dto)
+    });
+
+    if (!bookingRes.ok) throw new Error("Kunde inte skapa bokningen.");
+
+    // 7. Klart!
+    setChatLog(prev => [...prev, {
+      sender: 'ai',
+      message: "✅ Bokningen är nu bekräftad!"
+    }]);
+    setPendingBooking(null);
+  } catch (err) {
+    console.error(err);
+    setChatLog(prev => [...prev, {
+      sender: 'ai',
+      message: "❌ Bokningen misslyckades – något gick fel."
+    }]);
+  }
+};
 
   const formatTime = (timeStr: string) =>
     new Date(timeStr).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
@@ -167,7 +170,7 @@ const AiAssistant: React.FC = () => {
             {chatLog.length === 0 && (
               <p className="ai-assistant-placeholder">
                 Hej! <br />
-                Jag är din AI-Assistent. Jag hjälper dig boka skrivbord, mötesrum och mer. Skriv bara vad du behöver!
+                Jag är din AIssistent. Jag hjälper dig boka skrivbord, mötesrum och mer. Skriv bara vad du behöver!
               </p>
             )}
 

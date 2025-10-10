@@ -11,7 +11,7 @@ const subscribers: ((update: BookingUpdate) => void)[] = [];
 
 // Broadcast to all subscribers
 const broadcast = (update: BookingUpdate) => {
-  console.log(`🔔 Broadcasting to ${subscribers.length} subscribers`, update);
+  //console.log(`🔔 Broadcasting to ${subscribers.length} subscribers`, update);
   subscribers.forEach(cb => cb(update));
 };
 
