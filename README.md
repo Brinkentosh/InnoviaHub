@@ -62,7 +62,7 @@ dotnet restore
 3. **Create .env file in the root of Backend folder with this context**
 ```bash
 AZURE_SQL_CONNECTIONSTRING='XXXX'
-JWT_SECRET='XXXX
+JWT_SECRET='XXXX'
 OpenAI__ApiKey=XXXX
 ```
 
