@@ -20,6 +20,7 @@ namespace Backend.Controllers
         {
             var resources = await _context.Resources
                 .Include(r => r.Timeslots)
+                .Include(r => r.Sensors)
                 .ToListAsync();
             return Ok(resources);
         }

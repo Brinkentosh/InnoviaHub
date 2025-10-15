@@ -10,5 +10,13 @@ namespace InnoviaHub.DTOs
         public int Capacity { get; set; }
         public int CurrentBookings { get; set; }
         // New property to show current bookings, good for admin view
+
+        public List<IoTSensorDTO> Sensors { get; set; } = new List<IoTSensorDTO>();
     }
+
+        public class IoTSensorDTO
+        {
+            public string Serial { get; set; } = null!;
+            public string Type { get; set; } = null!;
+        }
 }
