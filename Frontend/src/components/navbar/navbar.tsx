@@ -39,6 +39,9 @@ const Navbar = () => {
           <Link to="/book">Boka Resurser</Link>
         </li>
         <li>
+          <Link to ="/sensors">Sensorer</Link>
+        </li>
+        <li>
           <Link to="/office">Kontorslayout</Link>
         </li>
         {!user ? (

@@ -1,0 +1,60 @@
+.sensorsContent {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sensorsContent h2 {
+  font-size: 2rem;
+  color: #ff8c5b;
+  margin-bottom: 1rem;
+  text-align: center;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.sensorTypeGroup {
+  margin-bottom: 2rem;
+}
+
+.sensorTypeGroup h3 {
+  font-size: 1.5rem;
+  color: #007acc;
+  margin-bottom: 0.75rem;
+  border-bottom: 2px solid #007acc;
+  padding-bottom: 0.25rem;
+}
+
+.sensorTypeGroup ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.sensorTypeGroup li {
+  background-color: #f5f7fa;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sensorTypeGroup li:hover {
+  background-color: #e0e6ed;
+}
+
+.sensorTypeGroup li strong {
+  color: #333;
+  flex: 1;
+}
+
+.sensorTypeGroup li span {
+  font-weight: 500;
+  color: #555;
+}

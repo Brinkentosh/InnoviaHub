@@ -17,6 +17,7 @@ namespace InnoviaHub.Models
     {
         public int Id { get; set; }
         public string Serial { get; set; } = null!;
+        public string SensorID { get; set; } = null!;
         public string Type { get; set; } = null!;
 
         public int ResourceId { get; set; }

@@ -10,6 +10,8 @@ import LoginPage from "./pages/signInPage/signIn";
 import BookingsAdmin from "./components/Admin/BookingsAdmin/bookingsAdmin";
 import ResourceAdmin from "./components/Admin/ResourceAdmin/resourceAdmin";
 import AiAssistant from "./components/AiAssistant/AiAssistant";
+import SensorPage from "./pages/sensorPage/sensorPage";
+import SensorAdmin from "./components/Admin/SensorAdmin/sensorAdmin";
 
 
 
@@ -23,12 +25,14 @@ function App() {
           <Route path="members" element={<MemberTable />} />
           <Route path="bookings" element={<BookingsAdmin />} /> 
           <Route path="resources" element={<ResourceAdmin/>} />
+          <Route path="sensors" element={<SensorAdmin />} />
         </Route>
        <Route path="office" element={<LayoutPage />} />
         <Route path="/book" element={<BookingPage />} />
         <Route path="/myBookings" element={<MyBookings />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="bookings" element={<BookingsAdmin />} />
+        <Route path="/sensors" element={<SensorPage />} />
         {/* NotFoundPage */}
         <Route path="*" element={<NotFoundPage />} />
 

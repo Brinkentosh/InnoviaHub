@@ -10,12 +10,14 @@ type SensorData = {
   battery?: number;
   light?: number;
   sound?: number;
+  timestamp?: string;
 };
 
 type IoTSensor = {
-  id: number;
+  id: string;
   serial: string;
   type: string;
+  sensorId: string;
 };
 
 type Booking = {
@@ -58,20 +60,27 @@ const typeClassMap: { [key: string]: string } = {
 };
 
 function mapMeasurementToSensorData(measurement: RealtimeMeasurement): SensorData {
+  const mapped: SensorData = {
+    timestamp: measurement.time,
+  };
   switch (measurement.type) {
     case "temperature":
-      return { temperature: measurement.value };
+      mapped.temperature = measurement.value;
+      break;
     case "co2":
-      return { co2: measurement.value };
+      mapped.co2 = measurement.value;
+      break;
     case "battery":
-      return { battery: measurement.value };
+      mapped.battery = measurement.value;
+      break;
     case "light":
-      return { light: measurement.value };
+      mapped.light = measurement.value;
+      break;
     case "sound":
-      return { sound: measurement.value };
-    default:
-      return {};
+      mapped.sound = measurement.value;
+      break;
   }
+  return mapped;
 }
 
 const Layout = () => {
@@ -81,53 +90,8 @@ const Layout = () => {
 
   useEffect(() => {
     let isMounted = true;
-
-    const fetchResourcesAndBookings = async () => {
-      try {
-        const [resRes, resBookings] = await Promise.all([
-          fetch(`${BASE_URL}resource`),
-          fetch(`${BASE_URL}booking`),
-        ]);
-
-        if (!resRes.ok) throw new Error("Kunde inte hämta resurser");
-        if (!resBookings.ok) throw new Error("Kunde inte hämta bokningar");
-
-        const resourcesData: Resource[] = await resRes.json();
-        const bookingsData: Booking[] = await resBookings.json();
-
-        const collator = new Intl.Collator("sv", { numeric: true, sensitivity: "base" });
-        const sortedResources = resourcesData.sort((a, b) =>
-          collator.compare(a.resourceName, b.resourceName)
-        );
-
-        const resourcesWithBookings = sortedResources.map((res) => {
-          const bookingsForRes = bookingsData
-            .filter((b) => b.resourceId === res.resourceId)
-            .sort(
-              (a, b) =>
-                new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-            );
-          return {
-            ...res,
-            bookings: bookingsForRes,
-          };
-        });
-
-        if (isMounted) {
-          setResources(resourcesWithBookings);
-        }
-      } catch (err: any) {
-        if (isMounted) {
-          setError(err.message || "Något gick fel vid hämtning");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchResourcesAndBookings();
+    let connectionStarted = false;
+    const tenantSlug = "innovia";
 
     const connection = new signalR.HubConnectionBuilder()
       .withUrl("http://localhost:5103/hub/telemetry", {
@@ -144,8 +108,9 @@ const Layout = () => {
       setResources((prevResources) =>
         prevResources.map((res) => {
           const hasMatchingSensor = res.sensors?.some(
-            (sensor) => sensor.serial.toLowerCase() === deviceId
+            (sensor) => sensor.sensorId.toLowerCase() === deviceId
           );
+
           if (hasMatchingSensor) {
             return {
               ...res,
@@ -155,28 +120,84 @@ const Layout = () => {
               },
             };
           }
+
           return res;
         })
       );
     });
 
-    connection
-      .start()
-      .then(() => {
+    const startSignalR = async () => {
+      if (!connectionStarted) {
+        try {
+          await connection.start();
+          connectionStarted = true;
+          await connection.invoke("JoinTenant", tenantSlug);
+          console.log("✅ SignalR connected & joined:", tenantSlug);
+        } catch (err) {
+          console.error("❌ SignalR-anslutning misslyckades:", err);
+          if (isMounted) {
+            setError("Kunde inte ansluta till SignalR");
+          }
+        }
+      }
+    };
+
+    const fetchResourcesAndBookings = async () => {
+      try {
+        const [resRes, resBookings] = await Promise.all([
+          fetch(`${BASE_URL}resource`),
+          fetch(`${BASE_URL}booking`),
+        ]);
+
+        if (!resRes.ok) throw new Error("Kunde inte hämta resurser");
+        if (!resBookings.ok) throw new Error("Kunde inte hämta bokningar");
+
+        const resourcesData: Resource[] = await resRes.json();
+        const bookingsData: Booking[] = await resBookings.json();
+
+        const collator = new Intl.Collator("sv", { numeric: true, sensitivity: "base" });
+
+        const sortedResources = resourcesData.sort((a, b) =>
+          collator.compare(a.resourceName, b.resourceName)
+        );
+
+        const resourcesWithBookings = sortedResources.map((res) => {
+          const bookingsForRes = bookingsData
+            .filter((b) => b.resourceId === res.resourceId)
+            .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+          return {
+            ...res,
+            bookings: bookingsForRes,
+          };
+        });
+
         if (isMounted) {
-          console.log("SignalR connected ✅");
+          setResources(resourcesWithBookings);
+          console.log("✅ Resurser & bokningar laddade");
         }
-      })
-      .catch((err) => {
-        if (isMounted && connection.state !== signalR.HubConnectionState.Connected) {
-          console.error("SignalR error:", err);
-          setError("Kunde inte ansluta till SignalR: " + err.toString());
+      } catch (err: any) {
+        if (isMounted) {
+          setError(err.message || "Något gick fel vid hämtning");
         }
-      });
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchResourcesAndBookings();
+    startSignalR();
 
     return () => {
       isMounted = false;
-      connection.stop().catch((err) => console.error("SignalR stop error:", err));
+      if (connectionStarted) {
+        connection
+          .stop()
+          .then(() => console.log("🔌 SignalR frånkopplad"))
+          .catch((err) => console.error("❌ SignalR stop error:", err));
+      }
     };
   }, []);
 
@@ -194,11 +215,10 @@ const Layout = () => {
       <h2 className="layoutHeader">
         <i>Hovra över resurs för sensorvärden</i>
       </h2>
+
       <div className="officeGridWrapper">
         {["motesrum", "skrivbord", "vr-headset", "ai-server"].map((type) => {
-          const filtered = resources.filter(
-            (r) => typeClassMap[r.resourceType] === type
-          );
+          const filtered = resources.filter((r) => typeClassMap[r.resourceType] === type);
           if (filtered.length === 0) return null;
 
           return (
@@ -210,13 +230,14 @@ const Layout = () => {
                   data-id={res.resourceId}
                 >
                   <strong>{res.resourceName}</strong>
+
                   <div className="sensorTooltip">
                     <h3>Sensorvärden</h3>
                     <hr />
                     {res.sensorData ? (
                       <>
                         {res.sensorData.temperature !== undefined && (
-                          <div>Temperatur: {res.sensorData.temperature}°C</div>
+                          <div>Temperatur: {res.sensorData.temperature.toFixed(1)}°C</div>
                         )}
                         {res.sensorData.co2 !== undefined && (
                           <div>CO2: {res.sensorData.co2} ppm</div>
@@ -230,9 +251,15 @@ const Layout = () => {
                         {res.sensorData.sound !== undefined && (
                           <div>Ljudnivå: {res.sensorData.sound}</div>
                         )}
+                        {res.sensorData.timestamp && (
+                          <div style={{ fontSize: "0.8em", color: "#666" }}>
+                            Senast uppdaterad:{" "}
+                            {new Date(res.sensorData.timestamp).toLocaleTimeString()}
+                          </div>
+                        )}
                       </>
                     ) : (
-                      <div>Ingen data tillgänglig</div>
+                      <div>Ingen data tillgänglig.</div>
                     )}
                   </div>
                 </div>
