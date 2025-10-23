@@ -10,5 +10,17 @@ namespace InnoviaHub.Models
 
         // To connect to Timeslots
         public ICollection<Timeslot> Timeslots { get; set; } = new List<Timeslot>();
+        public ICollection<IoTSensor> Sensors { get; set; } = new List<IoTSensor>();
+    }
+
+    public class IoTSensor
+    {
+        public int Id { get; set; }
+        public string Serial { get; set; } = null!;
+        public string SensorID { get; set; } = null!;
+        public string Type { get; set; } = null!;
+
+        public int ResourceId { get; set; }
+        public Resource Resource { get; set; } = null!;
     }
 }
