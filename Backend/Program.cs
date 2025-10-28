@@ -57,7 +57,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactDev", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173",
+                            "https://mango-ground-08b994903.3.azurestaticapps.net/")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
