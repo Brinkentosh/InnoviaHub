@@ -1,5 +1,4 @@
-import type { StreamInvocationMessage } from "@microsoft/signalr";
-import React, {useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 
 type Device = {
     id: string;
