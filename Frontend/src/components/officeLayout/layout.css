@@ -54,25 +54,22 @@
     box-shadow: 0 2px 5px rgb(187, 187, 187);
 }
 
-.sensorTooltip {
+.bookingTooltip {
     pointer-events: auto;
-    display: none; /* göm tooltip som standard */
+    display: none;
     position: absolute;
-    top: 110%; /* precis under resursen */
-    left: 50%;
-    transform: translateX(-50%);
+    top: 110%;
+    left: 0;
     background: #fff;
     border: 1px solid #aaa;
     border-radius: 5px;
-    padding: 8px 10px;
+    padding: 5px;
     z-index: 10;
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.48);
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.479);
     width: 14em;
-    font-size: 0.9rem;
-    text-align: left;
 }
 
-.resource:hover .sensorTooltip{
+.resource:hover .bookingTooltip{
     display: block;
 }
 
