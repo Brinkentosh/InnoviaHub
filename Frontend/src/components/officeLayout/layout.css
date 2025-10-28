@@ -12,8 +12,6 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 2em;
-    border-left: 1px solid black;
-    border-right: 1px solid black;
     position: relative;
 }
 
@@ -23,20 +21,17 @@
     content: "";
     position: absolute;
     width: 0;
-    border-left: 0.18em solid black; 
     height: 8em; 
 }
 
 .officeGridWrapper::before {
     left: -2px;
     top: 120px;
-    box-shadow: 0 200px 0 0 black, 0 400px 0 0 black;
 }
 
 .officeGridWrapper::after {
     right: -2px;
     top: 120px;
-    box-shadow: 0 200px 0 0 black, 0 400px 0 0 black;
 }
 
 
