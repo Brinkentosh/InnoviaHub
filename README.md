@@ -119,3 +119,9 @@ The following parts of the system were personally developed or further enhanced:
     This functionality is prepared but not yet deployed to the production APIs.
 -   UI & CSS Improvements
     Refined the office layout view and fixed several CSS inconsistencies to improve responsiveness and overall design quality.
+
+### Testaccount
+Username: test@mail.com
+Password: Test123!
+
+Adminaccount is sent to course coordinator!

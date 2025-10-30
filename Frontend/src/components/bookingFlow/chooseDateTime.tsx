@@ -10,7 +10,7 @@ interface ChooseDateTimeProps {
   selectedResourceName: string;
   selectedResourceId: number | null;
   selectedTimeslot: Timeslot | null;
-  setSelectedTimeslot: (slot: Timeslot) => void;
+  setSelectedTimeslot: (slot: Timeslot | null) => void;
   setSelectedDate: (date: Date | null) => void;
   onContinue: () => void;
   onReturn: () => void;

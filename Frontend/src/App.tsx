@@ -11,7 +11,7 @@ import BookingsAdmin from "./components/Admin/BookingsAdmin/bookingsAdmin";
 import ResourceAdmin from "./components/Admin/ResourceAdmin/resourceAdmin";
 import AiAssistant from "./components/AiAssistant/AiAssistant";
 import SensorPage from "./pages/sensorPage/sensorPage";
-import SensorAdmin from "./components/Admin/SensorAdmin/sensorAdmin";
+//import SensorAdmin from "./components/Admin/SensorAdmin/sensorAdmin";
 import SensorOffline from "./components/sensors/SensorsOffline";
 
 
