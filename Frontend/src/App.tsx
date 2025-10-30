@@ -12,6 +12,7 @@ import ResourceAdmin from "./components/Admin/ResourceAdmin/resourceAdmin";
 import AiAssistant from "./components/AiAssistant/AiAssistant";
 import SensorPage from "./pages/sensorPage/sensorPage";
 import SensorAdmin from "./components/Admin/SensorAdmin/sensorAdmin";
+import SensorOffline from "./components/sensors/SensorsOffline";
 
 
 
@@ -25,7 +26,7 @@ function App() {
           <Route path="members" element={<MemberTable />} />
           <Route path="bookings" element={<BookingsAdmin />} /> 
           <Route path="resources" element={<ResourceAdmin/>} />
-          <Route path="sensors" element={<SensorAdmin />} />
+          <Route path="sensors" element={<SensorOffline />} />
         </Route>
        <Route path="office" element={<LayoutPage />} />
         <Route path="/book" element={<BookingPage />} />
@@ -33,6 +34,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="bookings" element={<BookingsAdmin />} />
         <Route path="/sensors" element={<SensorPage />} />
+
         {/* NotFoundPage */}
         <Route path="*" element={<NotFoundPage />} />
 

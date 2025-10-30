@@ -4,18 +4,17 @@ import connection from "../services/signalRConnection";
 export interface BookingUpdate {
   resourceId: number;
   date: string;
+  timeslotId?: number;
+  action?: "lock" | "unlock" | "update";
 }
 
 // Global list of subscribers
 const subscribers: ((update: BookingUpdate) => void)[] = [];
 
-// Broadcast to all subscribers
 const broadcast = (update: BookingUpdate) => {
-  //console.log(`🔔 Broadcasting to ${subscribers.length} subscribers`, update);
   subscribers.forEach(cb => cb(update));
 };
 
-// Ref to controll if connection is initiated
 const isConnectedRef = { current: false };
 
 const useSignalr = (callback: (update: BookingUpdate) => void, source = "unknown") => {
@@ -28,11 +27,17 @@ const useSignalr = (callback: (update: BookingUpdate) => void, source = "unknown
 
     const startConnection = async () => {
       if (!isConnectedRef.current) {
-        // Add event handler if not already 
+        // Lägg till handlers bara en gång
         if (!(connection as any)._hasHandler) {
           connection.on("ReceiveBookingUpdate", broadcast);
+          connection.on("ReceiveTimeslotLocked", (data) => {
+            broadcast({ ...data, action: "lock" });
+          });
+          connection.on("ReceiveTimeslotUnlocked", (data) => {
+            broadcast({ ...data, action: "unlock" });
+          });
           (connection as any)._hasHandler = true;
-          console.log("📡 SignalR handler registered");
+          console.log("📡 SignalR handlers registered");
         }
 
         if (connection.state !== "Connected") {
@@ -40,8 +45,6 @@ const useSignalr = (callback: (update: BookingUpdate) => void, source = "unknown
             await connection.start();
             isConnectedRef.current = true;
             console.log("✅ SignalR connected");
-            // Trigger dummy event to test
-            broadcast({ resourceId: -1, date: new Date().toISOString() });
           } catch (err) {
             console.error("❌ SignalR connection error:", err);
           }

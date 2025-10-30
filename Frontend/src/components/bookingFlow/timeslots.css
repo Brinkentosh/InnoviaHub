@@ -19,7 +19,7 @@ li{
     background-color:#61988e67;
 }
 .timeslotItem.selected{
-    background-color: #61988e;;
+    background-color: #61988e;
 }
 
 .timeslotItem.booked {
@@ -33,3 +33,38 @@ li{
     margin-left: 45%;
 }
 
+.timeslot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.timeslot-btn {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  background: #e9f5ff;
+  cursor: pointer;
+  border-radius: 4px;
+  min-width: 90px;
+}
+
+.timeslot-btn:hover {
+  background: #d6eeff;
+}
+
+.timeslot-btn.selected {
+  background: #4db6ff;
+  color: white;
+}
+
+.timeslot-btn.booked {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.timeslot-btn.locked {
+  background: #ffb3b3;
+  color: #333;
+  cursor: not-allowed;
+}

@@ -1,21 +1,25 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import "./timeslots.css";
 import useSignalr from "../../hooks/useSignalR";
+import type { BookingUpdate } from "../../hooks/useSignalR";
 import { BASE_URL } from "../../config";
+import connection from "../../services/signalRConnection";
 
+// Typdefinition för en timeslot
 export type Timeslot = {
   timeslotId: number;
   startTime: string;
   endTime: string;
   isBooked: boolean;
   resourceId: number;
+  locked?: boolean;
 };
 
 interface ShowAvailableTimeslotsProps {
   resourceId: number | undefined;
   date: Date;
   selectedTimeslot: Timeslot | null;
-  setSelectedTimeslot: (slot: Timeslot) => void;
+  setSelectedTimeslot: (slot: Timeslot | null) => void; // ✅ nullable
 }
 
 const ShowAvailableTimeslots = ({
@@ -27,67 +31,141 @@ const ShowAvailableTimeslots = ({
   const [timeslots, setTimeslots] = useState<Timeslot[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Definiera fetchTimeslots med useCallback
-  const fetchTimeslots = useCallback(() => {
-    if (!resourceId || !date) return;
+  const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
 
-    const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+  // 🔁 Hämta tider
+  const fetchTimeslots = useCallback(() => {
+    if (!resourceId) return;
 
     console.log("🔄 Fetching timeslots for", resourceId, formattedDate);
 
     fetch(`${BASE_URL}Timeslot/resources/${resourceId}/timeslots?date=${formattedDate}`)
-      .then(res => {
+      .then((res) => {
         if (!res.ok) throw new Error("Kunde inte hämta lediga tider");
         return res.json();
       })
-      .then(data => setTimeslots([...data]))
-      .catch(err => setError(err.message));
-  }, [resourceId, date]);
+      .then((data) =>
+        setTimeslots(
+          data.map((slot: Timeslot) => ({
+            ...slot,
+            locked: Boolean(slot.locked),
+          }))
+        )
+      )
+      .catch((err) => setError(err.message));
+  }, [resourceId, formattedDate]);
 
-  // Skapa en ref för att alltid ha senaste fetchTimeslots
-  const fetchTimeslotsRef = useRef(fetchTimeslots);
-  useEffect(() => {
-    fetchTimeslotsRef.current = fetchTimeslots;
-  }, [fetchTimeslots]);
+  // 🧠 Hantera inkommande SignalR-meddelanden
+  useSignalr(
+    (update: BookingUpdate) => {
+      if (update.resourceId === resourceId && update.date === formattedDate) {
+        setTimeslots((prev) =>
+          prev.map((slot) =>
+            slot.timeslotId === update.timeslotId
+              ? { ...slot, locked: update.action === "lock" }
+              : slot
+          )
+        );
+      }
+    },
+    "ShowAvailableTimeslots"
+  );
 
-  // Use useSignalr and call fetchTimeslots via ref
-  useSignalr((update: any) => {
-    console.log("♥️ ShowAvailableTimeslots SignalR callback:", update);
-    if (fetchTimeslotsRef.current) {
-      fetchTimeslotsRef.current();
+  // 🖱️ Klickhantering
+  const handleClick = async (slot: Timeslot) => {
+    if (slot.isBooked) return;
+
+    // Avmarkera om användaren klickar på sin egen valda slot
+    if (selectedTimeslot?.timeslotId === slot.timeslotId) {
+      setSelectedTimeslot(null);
+      setTimeslots((prev) =>
+        prev.map((s) =>
+          s.timeslotId === slot.timeslotId ? { ...s, locked: false } : s
+        )
+      );
+      try {
+        await connection.invoke(
+          "UnlockTimeslot",
+          slot.resourceId,
+          formattedDate,
+          slot.timeslotId
+        );
+      } catch (err) {
+        console.error("❌ Kunde inte låsa upp timeslot:", err);
+      }
+      return;
     }
-  }, `${resourceId}-${date.toDateString()}`);
 
+    if (slot.locked) return;
+
+    // Markera lokalt som vald och lås
+    setSelectedTimeslot(slot);
+    setTimeslots((prev) =>
+      prev.map((s) =>
+        s.timeslotId === slot.timeslotId ? { ...s, locked: true } : s
+      )
+    );
+
+    try {
+      await connection.invoke(
+        "LockTimeslot",
+        slot.resourceId,
+        formattedDate,
+        slot.timeslotId
+      );
+    } catch (err) {
+      console.error("❌ Kunde inte låsa timeslot:", err);
+    }
+  };
+
+  // 🔓 Lås upp timeslot vid unload
+  useEffect(() => {
+    const handleUnload = () => {
+      if (selectedTimeslot) {
+        connection.invoke(
+          "UnlockTimeslot",
+          selectedTimeslot.resourceId,
+          formattedDate,
+          selectedTimeslot.timeslotId
+        );
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      handleUnload();
+    };
+  }, [selectedTimeslot, formattedDate]);
+
+  // 🚀 Hämta tider vid mount
   useEffect(() => {
     fetchTimeslots();
   }, [fetchTimeslots]);
 
   return (
-    <div>
-      <h2>Tillgängliga tider</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <ul className="timeslotHolder">
-        {timeslots.map(slot => {
-          const start = new Date(slot.startTime);
-          const end = new Date(slot.endTime);
-          const isSelected = selectedTimeslot?.timeslotId === slot.timeslotId;
-          const isDisabled = slot.isBooked;
+    <div className="timeslot-list">
+      <h3>Tillgängliga tider:</h3>
+      {error && <p className="error">{error}</p>}
+      {timeslots.length === 0 && <p>Inga tider tillgängliga</p>}
 
-          return (
-            <li
-              key={slot.timeslotId}
-              className={`timeslotItem ${isSelected ? "selected" : ""} ${isDisabled ? "booked" : ""}`}
-              onClick={() => { if (!isDisabled) setSelectedTimeslot(slot); }}
-            >
-              {start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} -{" "}
-              {end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{" "}
-              {isDisabled && " (Bokad)"}
-            </li>
-          );
-        })}
-      </ul>
+      <div className="timeslot-grid">
+        {timeslots.map((slot) => (
+          <button
+            key={slot.timeslotId}
+            onClick={() => handleClick(slot)}
+            className={`timeslot-btn
+              ${slot.isBooked ? "booked" : ""}
+              ${slot.locked ? "locked" : ""}
+              ${selectedTimeslot?.timeslotId === slot.timeslotId ? "selected" : ""}`}
+            disabled={slot.isBooked}
+          >
+            {slot.startTime.slice(0, 5)} – {slot.endTime.slice(0, 5)}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
